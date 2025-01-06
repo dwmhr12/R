@@ -1,0 +1,87 @@
+---
+title: "FP ADD"
+author: "M Iqbal BY"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+## R Markdown
+```{r}
+# Memasukkan paket yang diperlukan
+
+library(dendextend)
+# Membaca data dari file Excel
+library(readxl)
+FP <- read_excel("Data_Malang.xlsx")
+
+# Menyimpan data ke dalam variabel Data
+Data <- FP
+
+# Menampilkan struktur data dan beberapa baris pertama
+str(Data)
+head(Data)
+
+# Membuat scatter plot
+plot(Data$`Y (Longitude)` ~ Data$`X (Latitude)`, 
+     main = "Scatter Plot of Latitude vs Longitude",
+     xlab = "Latitude", ylab = "Longitude")
+text(Data$`Y (Longitude)`, Data$`X (Latitude)`, 
+     labels = Data$Nama, pos = 3, cex = 0.8)
+
+# Normalisasi
+z <- Data[, -c(1, 2)]
+m <- apply(z, 2, mean)
+s <- apply(z, 2, sd)
+z <- scale(z, m, s)
+
+# Menghitung Euclidean Distance
+distance <- dist(z)
+print(distance, digits = 3)
+
+par(mar = c(14, 8, 0.5, 2) + 0.5)
+# Clustering Dendrogram (Single Linkage)
+hc.l <- hclust(distance)
+dend <- as.dendrogram(hc.l)
+labels(dend) <- Data$Nama  
+dend <- hang.dendrogram(dend, hang_height = 0.1)
+plot(dend, main = "Dendrogram Hierarchical Clustering (Single Linkage)", cex = 1)
+rect.hclust(hc.l, k = 4, border = c("blue", "green", "orange", "red"))
+
+
+# Clustering Dendrogram (Average Linkage)
+hc.a <- hclust(distance, method = "average")
+dend <- as.dendrogram(hc.a)
+labels(dend) <- Data$Nama  # Mengganti label dengan Data$Nama
+dend <- hang.dendrogram(dend, hang_height = 0.1)
+plot(dend, main = "Dendrogram Hierarchical Clustering (Average Linkage)", cex = 1)
+rect.hclust(hc.a, k = 4, border = c("blue", "green", "orange", "red"))
+
+# Clustering Dendrogram (Complete Linkage)
+hc.c <- hclust(distance, method = "complete")
+dend <- as.dendrogram(hc.c)
+labels(dend) <- Data$Nama  # Mengganti label dengan Data$Nama
+dend <- hang.dendrogram(dend, hang_height = 0.1)
+plot(dend, main = "Dendrogram Hierarchical Clustering (Complete Linkage)", cex = 1)
+rect.hclust(hc.c, k = 4, border = c("blue", "green", "orange", "red"))
+
+# Menampilkan hasil clustering
+member.l <- cutree(hc.l, 4)
+clustersl <- data.frame(School = Data$Nama, Cluster = member.l)
+print(clustersl)
+
+member.a <- cutree(hc.a, 4)
+clustersa <- data.frame(School = Data$Nama, Cluster = member.a)
+print(clustersa)
+
+member.c <- cutree(hc.c, 4)
+clustersc <- data.frame(School = Data$Nama, Cluster = member.c)
+print(clustersc)
+
+# Menampilkan rata-rata nilai dalam setiap cluster
+aggregate(z, by = list(Cluster = member.l), mean)
+aggregate(z, by = list(Cluster = member.a), mean)
+aggregate(z, by = list(Cluster = member.c), mean)
+
+
+```
+
